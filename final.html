@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Newspaper Builder Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans Devanagari', serif; background: #f0ece0; min-height: 100vh; }
+
+    /* ═══ EDIT PANEL ═══ */
+    #edit-panel { max-width: 680px; margin: 0 auto; padding: 14px; }
+    .top-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 14px; }
+    .top-bar button { padding: 9px 20px; border: none; border-radius: 7px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-red  { background: #8B0000; color: #fff; }
+    .btn-grey { background: #ccc; color: #444; }
+    .card { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .card h2 { color: #8B0000; text-align: center; font-size: 18px; margin-bottom: 16px; }
+    .sec-title { font-weight: 700; color: #8B0000; font-size: 12px; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 14px 0 8px; }
+    
+    .row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+    .row label { min-width: 130px; font-size: 11px; color: #666; flex-shrink: 0; }
+    .row input, .row textarea { flex: 1; padding: 7px 9px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; font-family: 'Noto Sans Devanagari', serif; }
+    
+    .control-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f9f9f9; padding: 10px; border-radius: 8px; }
+    .ctrl-item { display: flex; flex-direction: column; gap: 4px; }
+    .ctrl-item label { font-size: 10px; font-weight: bold; color: #444; }
+
+    /* ── Image Size Control Box ── */
+    .img-size-box {
+      background: #fdf5f5;
+      border: 1px solid #e8c8c8;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 8px;
+    }
+    .img-size-box .size-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .img-size-box .size-row label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8B0000;
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+    .img-size-box .size-row input[type="range"] {
+      flex: 1;
+      accent-color: #8B0000;
+      cursor: pointer;
+      height: 4px;
+    }
+    .size-badge {
+      background: #8B0000;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      min-width: 52px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .size-hint {
+      font-size: 10px;
+      color: #999;
+      margin-top: 5px;
+      font-style: italic;
+    }
+
+    .upload-box { border: 2px dashed #8B0000; border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; background: #fff9f5; margin: 6px 0; }
+    .upload-box img { max-height: 100px; border-radius: 5px; }
+    .up-placeholder { color: #8B0000; font-weight: 600; font-size: 13px; }
+
+    #go-preview-btn { width: 100%; padding: 12px; background: #8B0000; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 14px; }
+
+    /* ═══ PREVIEW PANEL ═══ */
+    #preview-panel { display: none; position: fixed; inset: 0; flex-direction: column; background: #d6cfc0; overflow: hidden; z-index: 999; }
+    .preview-controls { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 7px 12px; background: #d6cfc0; flex-shrink: 0; }
+    .preview-controls button { padding: 7px 16px; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    #download-btn { background: #1a6e1a; color: #fff; }
+    #np-wrapper { flex: 1; display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 20px 4px; }
+
+    /* ═══ NEWSPAPER ═══ */
+    #newspaper { width: 820px; background: #fffef8; border: 2px solid #222; box-shadow: 5px 5px 24px rgba(0,0,0,0.4); transform-origin: top center; flex-shrink: 0; padding-bottom: 0; }
+    .reg-bar { background: #fff; border-bottom: 1px solid #ddd; padding: 3px 12px; font-size: 9px; color: #555; text-align: right; display: none; }
+    .masthead { background: #fff; padding: 5px 10px; text-align: center; border-bottom: 3px solid #8B0000; min-height: 120px; display: none; align-items: center; justify-content: center; }
+    #np-logo-img { max-width: 100%; max-height: 140px; object-fit: contain; }
+    .date-bar { display: none; justify-content: space-between; align-items: center; background: #8B0000; color: #fff; padding: 5px 14px; font-size: 14px; font-weight: 600; }
+    .logo-mini { width: 26px; height: 26px; border-radius: 50%; background: #c00; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 6px; color: #fff; font-weight: 900; flex-shrink: 0; }
+    .headline-block { display: none; text-align: center; margin: 0;padding: 0;}
+    .headline-text { font-size: 34px; font-weight: 900; line-height: 1.3; color: #111; padding: 10px 20px 8px 20px;margin: 0;display: block;}
+    .article-body { padding:0px 20px 20px 20px; margin: 0;display= none}
+    .news-text { column-count: 2; column-gap: 25px; column-rule: 1px solid #eee; text-align: justify; font-size: 15px; color: #1a1a1a; white-space: pre-wrap; margin: 0; padding-top: 0;}
+    .location-tag { display: none; font-weight: 800; margin-right: 4px; color: #000; }
+
+    /* News image: controlled height with cover crop */
+    .img-wrap {
+      width: 100%;
+      margin-bottom: 0px;
+      border: 1px solid #ccc;
+      padding: 2px;
+      background: #fff;
+      break-inside: avoid;
+      display: none;
+      overflow: hidden;
+    }
+    .img-wrap img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center top;
+    }
+
+    /* ═══ ADVERTISEMENT RECTANGLE ═══ */
+    .ad-container { 
+      width: 100%; 
+      display: none; 
+      border-top: 3px solid #8B0000; 
+      margin-top: 10px; 
+      overflow: hidden;
+      background: #fff;
+    }
+    #np-ad-img { 
+      width: 100%; 
+      display: block; 
+      object-fit: cover;
+      object-position: center center;
+    }
+
+    @media (max-width: 480px) { .row { flex-direction: column; align-items: stretch; } .row label { min-width: unset; } }
+  </style>
+</head>
+<body>
+
+<div id="edit-panel">
+  <div class="top-bar">
+    <button class="btn-red">✏️ Edit Mode</button>
+    <button class="btn-grey" onclick="showPreview()">🗞️ Preview</button>
+  </div>
+  <div class="card">
+    <h2>📰 Newspaper Editor Pro</h2>
+    
+    <div class="sec-title">🎨 Appearance Customization</div>
+    <div class="control-group">
+      <div class="ctrl-item"><label>Theme Color</label><input type="color" id="themeColor" value="#8B0000"></div>
+      <div class="ctrl-item"><label>Headline Size (px)</label><input type="range" id="headSize" min="20" max="70" value="34"></div>
+      <div class="ctrl-item"><label>News Text Size (px)</label><input type="range" id="textSize" min="12" max="24" value="15"></div>
+      <div class="ctrl-item"><label>Headline Color</label><input type="color" id="headColor" value="#111111"></div>
+    </div>
+
+    <div class="sec-title">🖼️ Logo Header</div>
+    <div class="upload-box" onclick="document.getElementById('logoInput').click()">
+      <div id="logo-preview-box" class="up-placeholder">📷 Click to upload Channel Logo</div>
+    </div>
+    <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="handleLogo(event)"/>
+
+    <div class="sec-title">🏷️ Paper Details</div>
+    <div class="row"><label>Registration No.</label><input id="regNo" placeholder="REGISTRATION NO.MH-24-0000000"/></div>
+    <div class="row"><label>Editor Name</label><input id="editorName" placeholder="संपादकाचे नाव"/></div>
+    <div class="row"><label>Date</label><input id="date" placeholder="02/05/2026"/></div>
+    <div class="row"><label>District</label><input id="district" placeholder="जिल्हा"/></div>
+    
+    <div class="sec-title">📰 News Content</div>
+    <div class="row"><label>Location</label><input id="newsLocationInput" placeholder="शहर:"></div>
+    <div class="row"><label>Headline</label><textarea id="headline" rows="2"></textarea></div>
+    <div class="row"><label>News Text</label><textarea id="newsText" rows="12"></textarea></div>
+    
+    <!-- ── NEWS IMAGE UPLOAD + HEIGHT CONTROL ── -->
+    <div class="sec-title">🖼️ Upload News Image</div>
+    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+      <div id="news-img-preview" class="up-placeholder">📷 Click to upload News Photo</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleNewsImage(event)"/>
+
+    <div class="img-size-box">
+      <div class="size-row">
+        <label>📏 News Image Height</label>
+        <input type="range" id="newsImgHeight" min="80" max="600" value="280"
+               oninput="document.getElementById('newsImgHeightVal').textContent = this.value + 'px'">
+        <span class="size-badge" id="newsImgHeightVal">280px</span>
+      </div>
+      <div class="size-hint">⬅ Short crop &nbsp;&nbsp;|&nbsp;&nbsp; Tall full photo ➡ — drag to set how much image shows</div>
+    </div>
+
+    <!-- ── AD IMAGE UPLOAD + HEIGHT CONTROL ── -->
+    <div class="sec-title">📢 Bottom Advertisement (Professional Banner)</div>
+    <div class="upload-box" onclick="document.getElementById('adInput').click()">
+      <div id="ad-img-preview" class="up-placeholder">🖼️ Click to upload Rectangular Ad Banner</div>
+    </div>
+    <input type="file" id="adInput" accept="image/*" style="display:none" onchange="handleAdImage(event)"/>
+
+    <div class="img-size-box">
+      <div class="size-row">
+        <label>📏 Ad Banner Height</label>
+        <input type="range" id="adImgHeight" min="60" max="400" value="160"
+               oninput="document.getElementById('adImgHeightVal').textContent = this.value + 'px'">
+        <span class="size-badge" id="adImgHeightVal">160px</span>
+      </div>
+      <div class="size-hint">⬅ Thin strip &nbsp;&nbsp;|&nbsp;&nbsp; Large prominent ad ➡ — drag to set banner size</div>
+    </div>
+
+    <button id="go-preview-btn" onclick="showPreview()">🗞️ Preview Newspaper →</button>
+  </div>
+</div>
+
+<div id="preview-panel">
+  <div class="preview-controls">
+    <button class="btn-grey" onclick="showEdit()">✏️ Edit</button>
+    <button id="download-btn" onclick="downloadJPG()">⬇️ Save as JPG</button>
+  </div>
+  <div id="np-wrapper">
+    <div id="newspaper">
+      <div class="reg-bar" id="np-reg-bar"><span id="np-reg"></span></div>
+      <div class="masthead" id="masthead-box"><img id="np-logo-img" src="" style="display:none;"/></div>
+      <div class="date-bar" id="np-date-bar">
+        <span id="np-date"></span>
+        <div class="logo-mini" id="np-logo-mini">NP</div>
+        <span id="np-chief-editor"></span>
+      </div>
+      <div class="headline-block" id="np-headline-block"><div class="headline-text" id="np-headline"></div></div>
+      <div class="article-body">
+        <div class="img-wrap" id="np-img-box"></div>
+          <div class="news-text" id="np-text">
+          <span id="np-location-display" class="location-tag"></span>
+          <span id="np-main-text-flow"></span>
+        </div>
+      </div>
+
+      <div class="ad-container" id="ad-container">
+        <img id="np-ad-img" src="" alt="Advertisement"/>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var newsImgSrc = null;
+  var logoImgSrc = null;
+  var adImgSrc   = null;
+
+  function g(id){ return document.getElementById(id).value.trim(); }
+
+  function toggleEl(id, condition, displayType){
+    document.getElementById(id).style.display = condition ? (displayType || 'block') : 'none';
+  }
+
+  function handleLogo(e){
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      logoImgSrc = ev.target.result;
+      document.getElementById('logo-preview-box').innerHTML = '<img src="'+logoImgSrc+'"/>';
+    };
+    reader.readAsDataURL(e.target.files[0]);
+  }
+
+  function handleNewsImage(e){
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      newsImgSrc = ev.target.result;
+      document.getElementById('news-img-preview').innerHTML = '<img src="'+newsImgSrc+'"/>';
+    };
+    reader.readAsDataURL(e.target.files[0]);
+  }
+
+  function handleAdImage(e){
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      adImgSrc = ev.target.result;
+      document.getElementById('ad-img-preview').innerHTML = '<img src="'+adImgSrc+'"/>';
+    };
+    reader.readAsDataURL(e.target.files[0]);
+  }
+
+  function fillNewspaper(){
+    var theme = document.getElementById('themeColor').value;
+
+    /* ── Registration bar ── */
+    toggleEl('np-reg-bar', g('regNo') !== '');
+    document.getElementById('np-reg').textContent = g('regNo');
+
+    /* ── Logo / Masthead ── */
+    if (logoImgSrc) {
+      document.getElementById('masthead-box').style.display = 'flex';
+      document.getElementById('masthead-box').style.borderBottomColor = theme;
+      document.getElementById('np-logo-img').src = logoImgSrc;
+      document.getElementById('np-logo-img').style.display = 'block';
+    }
+
+    /* ── Date bar ── */
+    var showDateBar = g('date') !== '' || g('district') !== '' || g('editorName') !== '';
+    var dateBar = document.getElementById('np-date-bar');
+    dateBar.style.display = showDateBar ? 'flex' : 'none';
+    dateBar.style.backgroundColor = theme;
+    document.getElementById('np-date').textContent = 'दि.' + g('date') + ' | ' + g('district');
+    document.getElementById('np-chief-editor').textContent = 'संपादक - ' + g('editorName');
+
+    /* ── Headline ── */
+    var head = document.getElementById('headline').value.trim();
+    toggleEl('np-headline-block', head !== '');
+    document.getElementById('np-headline').textContent = head;
+    document.getElementById('np-headline').style.color = document.getElementById('headColor').value;
+    document.getElementById('np-headline').style.fontSize = document.getElementById('headSize').value + 'px';
+
+    /* ── News Image with controlled height ── */
+    var imgBox    = document.getElementById('np-img-box');
+    var newsHeight = document.getElementById('newsImgHeight').value;
+    if (newsImgSrc) {
+      imgBox.style.display = 'block';
+      imgBox.style.height  = newsHeight + 'px';           // exact vertical size
+      imgBox.innerHTML     = '<img src="' + newsImgSrc
+        + '" style="width:100%;height:' + newsHeight
+        + 'px;object-fit:cover;object-position:center top;display:block;"/>';
+    } else {
+      imgBox.style.display = 'none';
+    }
+
+    /* ── News text ── */
+    document.getElementById('np-location-display').style.display = g('newsLocationInput') !== '' ? 'inline' : 'none';
+    document.getElementById('np-location-display').textContent   = g('newsLocationInput') + ' ';
+    document.getElementById('np-main-text-flow').textContent     = document.getElementById('newsText').value.trim();
+    document.getElementById('np-text').style.fontSize            = document.getElementById('textSize').value + 'px';
+document.getElementById('np-text').style.fontSize = document.getElementById('textSize').value + 'px';
+var hasContent = newsImgSrc 
+  || document.getElementById('newsText').value.trim() !== ''
+  || g('newsLocationInput') !== '';
+document.querySelector('.article-body').style.display = hasContent ? 'block' : 'none';
+    /* ── Advertisement Banner with controlled height ── */
+    var adContainer = document.getElementById('ad-container');
+    var adImg       = document.getElementById('np-ad-img');
+    var adHeight    = document.getElementById('adImgHeight').value;
+    if (adImgSrc) {
+      adContainer.style.display        = 'block';
+      adContainer.style.borderTopColor = theme;
+      adImg.src                        = adImgSrc;
+      adImg.style.height               = adHeight + 'px';    // exact vertical size
+      adImg.style.objectFit            = 'cover';
+      adImg.style.objectPosition       = 'center center';
+    } else {
+      adContainer.style.display = 'none';
+    }
+  }
+
+  function scaleToFit(){
+    var np      = document.getElementById('newspaper');
+    var wrapper = document.getElementById('np-wrapper');
+    np.style.transform = 'scale(1)';
+    var scale = Math.min(
+      (wrapper.clientWidth  - 20) / np.offsetWidth,
+      (wrapper.clientHeight - 20) / np.offsetHeight,
+      1
+    );
+    np.style.transform = 'scale(' + scale + ')';
+  }
+
+  function showPreview(){
+    fillNewspaper();
+    document.getElementById('edit-panel').style.display   = 'none';
+    document.getElementById('preview-panel').style.display = 'flex';
+    setTimeout(scaleToFit, 100);
+  }
+
+  function showEdit(){
+    document.getElementById('preview-panel').style.display = 'none';
+    document.getElementById('edit-panel').style.display    = 'block';
+  }
+
+  function downloadJPG(){
+    var btn = document.getElementById('download-btn');
+    btn.disabled    = true;
+    btn.textContent = '⏳ Saving...';
+    var np           = document.getElementById('newspaper');
+    var oldTransform = np.style.transform;
+    np.style.transform = 'scale(1)';
+    html2canvas(np, { scale: 2, useCORS: true, backgroundColor: '#fffef8' }).then(function(canvas){
+      var link      = document.createElement('a');
+      link.download = 'newspaper_' + Date.now() + '.jpg';
+      link.href     = canvas.toDataURL('image/jpeg', 0.95);
+      link.click();
+      np.style.transform = oldTransform;
+      btn.disabled    = false;
+      btn.textContent = '⬇️ Save as JPG';
+    });
+  }
+</script>
+</body>
+</html>
